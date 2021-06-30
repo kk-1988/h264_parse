@@ -26,6 +26,38 @@ typedef enum {
 
 typedef struct
 {
-    
-
+    int startcodeprefix_len;
+    unsigned len;
+    unsigned max_size;
+    int forbidden_bit;
+    int nal_reference_idc;
+    int nal_unit_type;
+    char *buf;
 }NALU_t;
+
+FILE *h264bitstream = NULL;
+
+int info2 = 0,info3 = 0;
+
+static int FindStartCode2(unsigned char *Buf)
+{
+    if(Buf[0]!=0 || Buf[1]!=0 || Buf[2] != 1) return 0;
+    else return 1;
+}
+
+int GetAnnexbNALU(NALU_t *nalu)
+{
+    int pos = 0;
+    int StartCodeFound, rewind;
+    unsigned char *Buf;
+
+    if((Buf = (unsigned char *)calloc(nalu->max_size, sizeof(char))) == NULL)
+    {
+        printf("GetAnnexbNALU：Could not allocate Buf memory\n");
+        nalu->startcodeprefix_len = 3;
+
+        
+    }
+
+}
+
