@@ -56,7 +56,26 @@ int GetAnnexbNALU(NALU_t *nalu)
         printf("GetAnnexbNALU：Could not allocate Buf memory\n");
         nalu->startcodeprefix_len = 3;
 
-        
+        if (3 != fread(Buf, 1, 3, h264bitstream)){
+            free(Buf);
+            return 0;
+        }
+
+        info2 = FindStartCode2(Buf);
+        if(info2 != 1)
+        {
+            if(1 != fread(Buf+3,1,1, h264bitstream))
+            {
+                free(Buf);
+                return 0;
+            }
+            info3 = FindStartCode3(Buf);
+            if(info3 != 1)
+            {
+                free(Buf);
+                return -1;
+            }
+        }
     }
 
 }
