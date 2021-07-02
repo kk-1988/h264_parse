@@ -52,8 +52,9 @@ int GetAnnexbNALU(NALU_t *nalu)
     unsigned char *Buf;
 
     if((Buf = (unsigned char *)calloc(nalu->max_size, sizeof(char))) == NULL)
-    {
         printf("GetAnnexbNALU：Could not allocate Buf memory\n");
+
+
         nalu->startcodeprefix_len = 3;
 
         if (3 != fread(Buf, 1, 3, h264bitstream)){
@@ -125,7 +126,5 @@ int GetAnnexbNALU(NALU_t *nalu)
         free(Buf);
 
         return (pos + rewind);
-    }
-
 }
 
