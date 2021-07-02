@@ -75,7 +75,56 @@ int GetAnnexbNALU(NALU_t *nalu)
                 free(Buf);
                 return -1;
             }
+            else
+            {
+                pos = 4;
+                nalu->startcodeprefix_len = 4;
+            }
         }
+        else
+        {
+            nalu->startcodeprefix_len = 3;
+            pos = 3;
+        }
+
+        StartCodeFound = 0;
+        info2 = 0;
+        info3 = 0;
+
+        while(!StartCodeFound)
+        {
+            if(feof(h264bitstream))
+            {
+                nalu->len = (pos - 1)-nalu->startcodeprefix_len;
+                memcpy(nalu->buf, &Buf[nalu->startcodeprefix_len], nalu->len);
+                nalu->forbidden_bit = nalu->buf[0] & 0x80;  //1bit
+                nalu->nal_reference_idc = nalu->buf[0] & 0x60;  //2bit
+                nalu->nal_unit_type = (nalu->buf[0]) & 0x1f;    //5bit
+                free(Buf);
+                return pos - 1;
+            }    
+            Buf[pos++] = fgetc(h264bitstream);
+            info3 = FindStartCodes(&Buf[pos - 4]);
+            if(info3 != 1)
+                info2 = FindStartCode2(&Buf[pos - 3]);
+            StartCodeFound = (info2 == 1 || info3 == 1);
+        }
+
+        rewind = (info3 == 1)?-4:-3;
+
+        if(0 != fseek(h264bitstream, rewind, SEEK_CUR)){
+            free(Buf);
+            printf("GetAnnexbNALU:Candnot fseek in the bit stream file");
+        }
+
+        nalu->len = (pos + rewind) - nalu->startcodeprefix_len;
+        memcpy(nalu->buf, &Buf[nalu->startcodeprefix_len], nalu->len);
+        nalu->forbidden_bit = nalu->buf[0] & 0x80;      //1bit
+        nalu->nal_reference_idc = nalu->buf[0] & 0x60;  //2bit
+        nalu->nal_unit_type = (nalu->buf[0]) & 0x1f;    //5bit
+        free(Buf);
+
+        return (pos + rewind);
     }
 
 }
