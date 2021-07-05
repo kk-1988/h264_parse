@@ -18,11 +18,11 @@ typedef enum{
 } NaluType;
 
 typedef enum {
-    NALU_PRIORITY_DISOSABLE = 0,
-    NALU_PRIRITY_LOW    = 1,
-    NALU_PRIORITY_HIGH  = 2,
-    NALU_PRIORITY_HIGHEST   = 3
-};
+    NALU_PRIORITY_DISPOSABLE    = 0,
+    NALU_PRIORITY_LOW           = 1,
+    NALU_PRIORITY_HIGH          = 2,
+    NALU_PRIORITY_HIGHEST       = 3
+}NaluPriority;
 
 typedef struct
 {
@@ -43,6 +43,11 @@ static int FindStartCode2(unsigned char *Buf)
 {
     if(Buf[0]!=0 || Buf[1]!=0 || Buf[2] != 1) return 0;
     else return 1;
+}
+
+static int FindStartCode3 (unsigned char *Buf){
+	if(Buf[0]!=0 || Buf[1]!=0 || Buf[2] !=0 || Buf[3] !=1) return 0;//0x00000001?
+	else return 1;
 }
 
 int GetAnnexbNALU(NALU_t *nalu)
@@ -105,7 +110,7 @@ int GetAnnexbNALU(NALU_t *nalu)
                 return pos - 1;
             }    
             Buf[pos++] = fgetc(h264bitstream);
-            info3 = FindStartCodes(&Buf[pos - 4]);
+            info3 = FindStartCode3(&Buf[pos - 4]);
             if(info3 != 1)
                 info2 = FindStartCode2(&Buf[pos - 3]);
             StartCodeFound = (info2 == 1 || info3 == 1);
@@ -131,7 +136,7 @@ int GetAnnexbNALU(NALU_t *nalu)
 int simplest_h264_parser(char *url)
 {
     NALU_t *n;
-    int bufersize = 100000;
+    int buffersize = 100000;
 
     FILE *myout = stdout;
 
@@ -142,7 +147,7 @@ int simplest_h264_parser(char *url)
         return 0;
     }
 
-    n = (NALU_t *)malloc(1, sizeof(NALU_t));
+    n = (NALU_t *)calloc(1, sizeof(NALU_t));
     if(n == NULL)
     {
         printf("Alloc NALU Error");
@@ -150,7 +155,7 @@ int simplest_h264_parser(char *url)
     }
 
     n->max_size = buffersize;
-    n->buf = (char *)calloc(buffersize, sizeof(char))
+    n->buf = (char *)calloc(buffersize, sizeof(char));
     if(n->buf == NULL)
     {
         free(n);
@@ -159,46 +164,47 @@ int simplest_h264_parser(char *url)
     }
 
     int data_offset = 0;
-    int nal_nunm = 0;
+    int nal_num = 0;
     printf("-----+-------- NALU Table ------+---------+\n");
 	printf(" NUM |    POS  |    IDC |  TYPE |   LEN   |\n");
 	printf("-----+---------+--------+-------+---------+\n");
 
-    while(!feof(h264bitstaream))
+    while(!feof(h264bitstream))
     {
-	int data_lenth;
-	data_length = GetAnnexbNALU(n;
+        int data_lenth;
+        data_lenth = GetAnnexbNALU(n);
 
-	char type_str[20] = {0};
-	switch(n->nal_unit_type)
-	{
-		case NALU_TYPE_SLICE:sprintf(type_str,"SLICE")break;
-		case NALU_TYPE_DQP:sprintf(type_str,"DPA")break;
-		case NALU_TYPE_DPB:sprintf(type_str,"DPB")break;
-		case NALU_TYPE_DPC:sprintf(type_str,"DPC")break;
-		case NALU_TYPE_IDR:sprintf(type_str,"IDR")break;
-		case NALU_TYPE_SEI:sprintf(type_str,"SEI")break;
-		case NALU_TYPE_SPS:sprintf(type_str,"SPS")break;
-		case NALU_TYPE_PPS:sprintf(type_str,"PPS")break;
-		case NALU_TYPE_AUD:sprintf(type_str,"AUD")break;
-		case NALU_TYPE_EOSEQ:sprintf(type_str,"EOSEQ")break;
-		case NALU_TYPE_EOSTREAM:sprintf(type_str,"EOSTREAM")break;
-		case NALU_TYPE_FILL:sprintf(type_str,"FILL")break;
-	}
+        char type_str[20] = {0};
+        switch(n->nal_unit_type)
+        {
+            case NALU_TYPE_SLICE:sprintf(type_str,"SLICE");break;
+            case NALU_TYPE_DPA:sprintf(type_str,"DPA");break;
+            case NALU_TYPE_DPB:sprintf(type_str,"DPB");break;
+            case NALU_TYPE_DPC:sprintf(type_str,"DPC");break;
+            case NALU_TYPE_IDR:sprintf(type_str,"IDR");break;
+            case NALU_TYPE_SEI:sprintf(type_str,"SEI");break;
+            case NALU_TYPE_SPS:sprintf(type_str,"SPS");break;
+            case NALU_TYPE_PPS:sprintf(type_str,"PPS");break;
+            case NALU_TYPE_AUD:sprintf(type_str,"AUD");break;
+            case NALU_TYPE_EOSEQ:sprintf(type_str,"EOSEQ");break;
+            case NALU_TYPE_EOSTREAM:sprintf(type_str,"EOSTREAM");break;
+            case NALU_TYPE_FILL:sprintf(type_str,"FILL");break;
+        }
 
-	char idc_str[20] = {0}；
-	switch(n->nal_reference_idc >> 5){
-		case NALU_PRIORITY_DISPOSABLE:sprintf(idc_str,"DISPOS");break;
-		case NALU_PRIRITY_LOW:sprintf(idc_str,"LOW");break;
-		case NALU_PRIORITY——HIGH:sprintf(idc_str,"HIGH");break;
-		case NALU_PRIORITY_HIGHEST:sprintf(idc_str,"HIGHEST");break;	
-	}
+	    char idc_str[20] = {0};
+	    switch(n->nal_reference_idc >> 5)
+        {
+		    case NALU_PRIORITY_DISPOSABLE:sprintf(idc_str,"DISPOS");break;
+		    case NALU_PRIORITY_LOW:sprintf(idc_str,"LOW");break;
+		    case NALU_PRIORITY_HIGH:sprintf(idc_str,"HIGH");break;
+		    case NALU_PRIORITY_HIGHEST:sprintf(idc_str,"HIGHEST");break;	
+	    }
 
-	fprintf(myout,"%5d| %8d| %7s| %6s| %8d|\n",nal_num,data_offset,idc_str,type_str,n->len);
+	    fprintf(myout,"%5d| %8d| %7s| %6s| %8d|\n",nal_num,data_offset,idc_str,type_str,n->len);
 
-	data_offset=data_offset+data_lenth;
+	    data_offset=data_offset+data_lenth;
 
-	nal_num++;
+	    nal_num++;
     }
 
      //Free
@@ -214,4 +220,11 @@ int simplest_h264_parser(char *url)
       }
 	
      return 0;
+}
+
+int main(int argc,char *argv[])
+{
+    printf("h264 parser...\r\n");
+    simplest_h264_parser("sintel.h264");
+    return 0;
 }
