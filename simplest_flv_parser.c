@@ -47,7 +47,28 @@ int simplest_flv_parser(char *url)
 
    FLV_HEADER flv;
 
+   TAG_HEADER tagheader;
+   uint previoustagsize,previoustagsize_z = 0;
+   uint ts=0,ts_new=0;
 
+   ifh = fopen(url, "rb+");
+   if( ifh == NULL)
+   {
+       printf("Failed to open files!\r\n");
+       return -1;
+   }
+  
+   //FLV file header
+    fread((char *)&flv, 1, sizeof(FLV_HEADER), ifh);
+
+    fprintf(myout,"============== FLV Header ==============\n");
+	fprintf(myout,"Signature:  0x %c %c %c\n",flv.Signature[0],flv.Signature[1],flv.Signature[2]);
+	fprintf(myout,"Version:    0x %X\n",flv.Version);
+	fprintf(myout,"Flags  :    0x %X\n",flv.Flags);
+	fprintf(myout,"HeaderSize: 0x %X\n",reverse_bytes((byte *)&flv.DataOffset, sizeof(flv.DataOffset)));
+	fprintf(myout,"========================================\n");
+
+    
 
 }
 
