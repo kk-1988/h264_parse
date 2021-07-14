@@ -68,8 +68,49 @@ int simplest_flv_parser(char *url)
 	fprintf(myout,"HeaderSize: 0x %X\n",reverse_bytes((byte *)&flv.DataOffset, sizeof(flv.DataOffset)));
 	fprintf(myout,"========================================\n");
 
-    
+    fseek(ifh, reverse_bytes((byte *)&flv.DataOffset, sizeof(flv.DataOffset)), SEEK_SET);
 
+    //process each tag
+    do 
+    {
+        previoustagsize = _getw(ifh);
+        fread((void)&taghrader, sizeof(TAG_HEADER), 1, ifh);
+
+        int tagheader_datasize = tagheader.DataSize[0]*65536  + tagheader.DataSize[1]*256  + tagheader.DataSize[2];
+        int tagheader_timestamp= tagheader.Timestamp[0]*65536 + tagheader.Timestamp[1]*256 + tagheader.Timestamp[2];
+
+        char tagtype_str[10];
+        switch(tagheaer.TagType)
+        {
+            case TAG_TYPE_AUDIO:
+                sprintf(tagtype_str,"AUDIO");
+            break;
+
+		    case TAG_TYPE_VIDEO:
+                sprintf(tagtype_str,"VIDEO");
+            break;
+
+		    case TAG_TYPE_SCRIPT:
+                sprintf(tagtype_str,"SCRIPT");
+            break;
+            
+		    default:
+                sprintf(tagtype_str,"UNKNOWN");
+            break;
+        }
+
+        fprintf(myout, "[%6s ] %d %d |,", tagtype_str, tagheader_datasize, tagheader_timestamp);
+
+        if(feof(ifh))
+            break;
+
+        switch(tagheader.TagType)
+        {
+            
+
+        }
+
+    }
 }
 
 int main(int argc,char *argv[])
