@@ -106,7 +106,65 @@ int simplest_flv_parser(char *url)
 
         switch(tagheader.TagType)
         {
-            
+            case TAG_TYPE_AUDIO:{
+                CHAR audiotag_str[100] = {0};
+                strcat(audiotag_str, "| ");
+                char tagdata_first_byte;
+                tagdata_first_byte = fgetc(ifh);
+                int x = tagdata_first_byte&0xF0;
+                x = x >> 4;
+                switch(x)
+                {
+                    case 0:strcat(audiotag_str, "Linear PCM, platform endian");break;
+                    case 1:strcat(audiotag_str, "ADPCM");break;
+                    case 2:strcat(audiotag_str, "MP3");break;
+                    case 3:strcat(audiotag_str, "Linear PCM, little endian");break;
+                    case 4:strcat(audiotag_str, "Nellymoser 16-kHz mono");break;
+                    case 5:strcat(audiotag_str, "Nellymoser 8-kHz mono");break;
+                    case 6:strcat(audiotag_str, "Nellymoser");break;
+                    case 7:strcat(audiotag_str, "G.711 A-law logarithmic PCM");break;
+                    case 8:strcat(audiotag_str, "G.711 mu-law logarithmic PCM");break;
+                    case 9:strcat(audiotag_str, "reserved");break;
+                    case 10:strcat(audiotag_str, "AAC");break;
+                    case 11:strcat(audiotag_str, "Speex");break;
+                    case 14:strcat(audiotag_str, "MP3 8-Khz");break;
+                    case 15:strcat(audiotag_str, "Device-specific sound");break;
+                    default:strcat(audiotag_str, "UNKNOWN");break;
+                }
+                strcat(audiotag_str,"| ");
+                x = tagdata_first_byte&0x0C;
+                x = x >> 2;
+                switch(x)
+                {
+                    case 0:strcat(audiotag_str,"5.5-kHz");break;
+                    case 1:strcat(audiotag_str,"1-kHz");break;
+                    case 2:strcat(audiotag_str,"22-kHz");break;
+                    case 3:strcat(audiotag_str,"44-kHz");break;
+                    default:strcat(audiotag_str,"UNKNOWN");break;
+                }
+                strcat(audiotag_str, "| ");
+                x = tagdata_first_byte&0x02;
+                x = x >> 1;
+                switch(x)
+                {
+                    case 0:strcat(audiotag_str, "8Bit");break;
+                    case 1:strcat(audiotag_str, "16Bit");break;
+                    default:strcat(audiotag_str, "UNKNOW");break;
+                }
+                strcat(audiotag_str, "| ");
+                x=tagdata_first_byte&0x01;
+                switch(x)
+                {
+                    case 0:strcat(audiotag_str, "Mono");break;
+                    case 1:strcat(audiotag_str, "Stereo");break;
+                    default:strcat(audiotag_str, "UNKNOW);break;
+                }
+                fprintf(myout, "%s", audiotag_str);
+
+                if(output_a != 0 && afg == NULL){
+                    afg = fopen("output.mp3", "wb");
+                }
+            }
 
         }
 
