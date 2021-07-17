@@ -173,15 +173,96 @@ int simplest_flv_parser(char *url)
                     for(int i = 0;i < data_size; i++)
                         fputc(fgetc(ifh), afh);
                 }
+                else
+                {
+                    for (int i = 0;i < data_size; i++)
+                        fgetc(ifh);
+                }
+                break;
             }
 
-        }
+            case TAG_TYPE_VIDE:
+            {
+                char videotag_str[100] = {0};
+                strcat(videotag_str, "| ");
+                char tagdata_first_byte;
+                tagdata_first_byte = fgetc(ifh);
+                int x = tagdata_first_byte & 0xF0;
+                x = x >> 4;
+                switch(x)
+                {
+                    case 1:strcat(videotag_str, "key frame ");break;
+                    case 2:strcat(videotag_str, "inter frame");break;
+                    case 3:strcat(videotag_str, "disposable inter frame");break;
+                    case 4:strcat(videotag_str, "generated keyframe");break;
+                    default:strcat(videotag_str, "UNKNOWN");break;
+                }
+                strcat(videotag_str, "| ");
+                x = tagdata_first_byte & 0x0F;
+                switch(x)
+                {
+                    case 1:strcat(videotag_str,"JPEG (currently unused)");break;
+                    case 2:strcat(videotag_str,"Sorenson H.263");break;
+                    case 3:strcat(videotag_str,"Screen video");break;
+                    case 4:strcat(videotag_str,"On2 VP6");break;
+                    case 5:strcat(videotag_str,"On2 VP6 with alpha channel");break;
+                    case 6:strcat(videotag_str,"Screen video version 2");break;
+                    case 7:strcat(videotag_str,"AVC");break;
+                    default:strcat(videotag_str,"UNKNOWN");break;
+                }
+                fprintf(myout, "%s", videotag_str);
 
-    }
+                fseek(ifh, -1, SEEK_CUR);
+                //if the output file hasn't been opened,open it
+                if(vfg == NULL&&output_v!=0)
+                {
+                    vfh = foepn("output.flv", "wb");
+                    fwrite((char *)&flv, 1, sizeof(flv), vfh);
+                    fwrite((char *)&previoustagsize_z, 1, sizeof(previoustagsize_z), vfh);
+                }
+
+                ts = reverse_bytes((byte *)&tagheader.Timestamp, sizeof(tagheader.Timestamp));
+                ts = ts * 2;
+
+                ts_new = reverse_bytes((byte *)&ts, sizeof(ts));
+                memcpy(&tagheader.Timestamp, ((char *)&ts_new) + 1, sizeof(tagheader.Timestamp));
+            
+                //TagData + Previous Tag Size
+                int data_size = reverse_bytes((byte *)&tagheader.DataSize, sizeof(tagheader.DataSize)) + 4;
+                if(output_v != 0)
+                {
+                    fwrite((char *)&tagheader, 1, sizeof(tagheader), vfh);
+                    //TagData
+                    for(int i = 0;i < data;i++)
+                    {
+                        fputc(fgetc(ifh), vfh);
+                    }
+                }
+                else
+                {
+                    for(int i = 0;i < data_size;i++)
+                    {
+                        fgetc(ifh);
+                    }
+                }
+
+                fseek(ifh, -4, SEEK_CUR);
+                break;
+            }
+
+            default:
+                fseek(ifh, reverse_bytes((byte *)&tagheader.DataSize, sizeof(tagheader.DataSize)), SEEK_CUR);
+        }
+        fprintf(myout, "\n");
+    }while(!feof(ifh));
+
+    _fcloseall();
+    return 0;
 }
 
 int main(int argc,char *argv[])
 {
-    
+    printf("flv parser demo...\r\n");
+    simplest_flv_parser("cuc_ieschool.flv");
     return 0;
 }
