@@ -41,7 +41,7 @@ int simplest_flv_parser(char *url)
    int output_a = 1;
    int output_v = 1;
 
-   FILE*ifh = NULL,*vfg = NULL, *afg = NULL;
+   FILE*ifh = NULL,*vfg = NULL, *afh = NULL;
 
    FILE *myout = stdout;
 
@@ -157,12 +157,21 @@ int simplest_flv_parser(char *url)
                 {
                     case 0:strcat(audiotag_str, "Mono");break;
                     case 1:strcat(audiotag_str, "Stereo");break;
-                    default:strcat(audiotag_str, "UNKNOW);break;
+                    default:strcat(audiotag_str, "UNKNOW");break;
                 }
                 fprintf(myout, "%s", audiotag_str);
 
-                if(output_a != 0 && afg == NULL){
-                    afg = fopen("output.mp3", "wb");
+                if(output_a != 0 && afh == NULL){
+                    afh = fopen("output.mp3", "wb");
+                }
+
+                //TagData-Firtst Byte Data
+                int data_size = reverse_bytes((byte *)&tagheader.DataSize, sizeof(tagheader.DataSize)) - 1;
+                if(output_a != 0 )
+                {
+                    //TagData + 1
+                    for(int i = 0;i < data_size; i++)
+                        fputc(fgetc(ifh), afh);
                 }
             }
 
