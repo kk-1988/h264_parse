@@ -1,9 +1,10 @@
+#define _GNU_SOURCE
 #include <stdio.h>
-#include <stdlib.h>
+int fcloseall(void);
+
 #include <string.h>
 
 #pragma pack(1)
-
 
 #define TAG_TYPE_SCRIPT 18
 #define TAG_TYPE_AUDIO  8
@@ -41,7 +42,7 @@ int simplest_flv_parser(char *url)
    int output_a = 1;
    int output_v = 1;
 
-   FILE*ifh = NULL,*vfg = NULL, *afh = NULL;
+   FILE*ifh = NULL,*vfh = NULL, *afh = NULL;
 
    FILE *myout = stdout;
 
@@ -73,14 +74,15 @@ int simplest_flv_parser(char *url)
     //process each tag
     do 
     {
-        previoustagsize = _getw(ifh);
-        fread((void)&taghrader, sizeof(TAG_HEADER), 1, ifh);
+        //_getw->getw
+        previoustagsize = getw(ifh);
+        fread((void *)&tagheader, sizeof(TAG_HEADER), 1, ifh);
 
         int tagheader_datasize = tagheader.DataSize[0]*65536  + tagheader.DataSize[1]*256  + tagheader.DataSize[2];
         int tagheader_timestamp= tagheader.Timestamp[0]*65536 + tagheader.Timestamp[1]*256 + tagheader.Timestamp[2];
 
         char tagtype_str[10];
-        switch(tagheaer.TagType)
+        switch(tagheader.TagType)
         {
             case TAG_TYPE_AUDIO:
                 sprintf(tagtype_str,"AUDIO");
@@ -107,7 +109,7 @@ int simplest_flv_parser(char *url)
         switch(tagheader.TagType)
         {
             case TAG_TYPE_AUDIO:{
-                CHAR audiotag_str[100] = {0};
+                char audiotag_str[100] = {0};
                 strcat(audiotag_str, "| ");
                 char tagdata_first_byte;
                 tagdata_first_byte = fgetc(ifh);
@@ -181,7 +183,7 @@ int simplest_flv_parser(char *url)
                 break;
             }
 
-            case TAG_TYPE_VIDE:
+            case TAG_TYPE_VIDEO:
             {
                 char videotag_str[100] = {0};
                 strcat(videotag_str, "| ");
@@ -214,9 +216,9 @@ int simplest_flv_parser(char *url)
 
                 fseek(ifh, -1, SEEK_CUR);
                 //if the output file hasn't been opened,open it
-                if(vfg == NULL&&output_v!=0)
+                if(vfh == NULL&&output_v!=0)
                 {
-                    vfh = foepn("output.flv", "wb");
+                    vfh = fopen("output.flv", "wb");
                     fwrite((char *)&flv, 1, sizeof(flv), vfh);
                     fwrite((char *)&previoustagsize_z, 1, sizeof(previoustagsize_z), vfh);
                 }
@@ -231,9 +233,10 @@ int simplest_flv_parser(char *url)
                 int data_size = reverse_bytes((byte *)&tagheader.DataSize, sizeof(tagheader.DataSize)) + 4;
                 if(output_v != 0)
                 {
+                    //TagHeader
                     fwrite((char *)&tagheader, 1, sizeof(tagheader), vfh);
                     //TagData
-                    for(int i = 0;i < data;i++)
+                    for(int i = 0;i < data_size; i++)
                     {
                         fputc(fgetc(ifh), vfh);
                     }
@@ -256,7 +259,7 @@ int simplest_flv_parser(char *url)
         fprintf(myout, "\n");
     }while(!feof(ifh));
 
-    _fcloseall();
+    fcloseall();
     return 0;
 }
 
